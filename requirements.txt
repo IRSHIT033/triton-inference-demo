@@ -9,4 +9,5 @@ pillow
 opencv-python
 protobuf
 grpcio
-pycuda 
+pycuda
+onnx 
