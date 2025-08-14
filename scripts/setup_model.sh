@@ -11,13 +11,18 @@ mkdir -p model_repository/dinov2_vit/1
 mkdir -p /tmp/trt_cache
 mkdir -p data/sample_images
 
-# Install dependencies if not already installed
+# Create and activate virtual environment
+echo "🐍 Creating Python virtual environment..."
+python3 -m venv venv
+source venv/bin/activate
+
+# Install dependencies in virtual environment
 echo "📦 Installing Python dependencies..."
 pip install -r requirements.txt
 
 # Convert model to TensorRT
 echo "🔄 Converting DINO V2 model to TensorRT..."
-python scripts/convert_to_tensorrt.py \
+./venv/bin/python scripts/convert_to_tensorrt.py \
     --model-name facebook/dinov2-base \
     --output-dir ./model_repository/dinov2_vit/1 \
     --max-batch-size 8 \
@@ -34,7 +39,7 @@ fi
 
 # Download sample images for testing
 echo "🖼️ Downloading sample images..."
-python -c "
+./venv/bin/python -c "
 import urllib.request
 import os
 
@@ -57,8 +62,9 @@ for i, url in enumerate(urls):
 echo "🎉 Setup completed successfully!"
 echo ""
 echo "Next steps:"
-echo "1. Start Triton server: docker-compose up triton-server"
-echo "2. Test inference: python client/triton_client.py --image data/sample_images/sample_1.png"
+echo "1. Activate virtual environment: source venv/bin/activate"
+echo "2. Start Triton server: docker-compose up triton-server"
+echo "3. Test inference: ./venv/bin/python client/triton_client.py --image data/sample_images/sample_1.png"
 echo ""
 echo "Model repository structure:"
 echo "model_repository/"
