@@ -9,16 +9,19 @@ ensemble_scheduling {
   step [
     {
       model_name: "dinov2_preprocess"
+      model_version: 1
       input_map  { key: "IMAGE_BYTES"   value: "IMAGE_BYTES" }
       output_map { key: "pixel_values"  value: "PIXELS" }
     },
     {
       model_name: "dinov2_trt"
+      model_version: 1
       input_map  { key: "pixel_values"  value: "PIXELS" }
       output_map { key: "image_embeds"  value: "RAW" }
     },
     {
       model_name: "dinov2_postprocess"
+      model_version: 1
       input_map  { key: "raw_embeds"    value: "RAW" }
       output_map { key: "embeddings"    value: "EMBEDDINGS" }
     }
