@@ -32,13 +32,12 @@ class AdvancedTritonClient:
                 self.protocol = "gRPC"
                 print(f"🔗 Connected to Triton server via gRPC: {clean_url}")
             else:
-                # Ensure http:// prefix for HTTP client
-                if not server_url.startswith(("http://", "https://")):
-                    server_url = f"http://{server_url}"
+                # Remove http:// prefix for HTTP client (it doesn't expect scheme)
+                clean_url = server_url.replace("http://", "").replace("https://", "")
                 
-                self.client = httpclient.InferenceServerClient(url=server_url)
+                self.client = httpclient.InferenceServerClient(url=clean_url)
                 self.protocol = "HTTP"
-                print(f"🔗 Connected to Triton server via HTTP: {server_url}")
+                print(f"🔗 Connected to Triton server via HTTP: {clean_url}")
                 
         except Exception as e:
             print(f"❌ Failed to connect to Triton server: {e}")
