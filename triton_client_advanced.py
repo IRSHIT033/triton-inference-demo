@@ -208,20 +208,22 @@ class AdvancedTritonClient:
     
     def prepare_inputs(self, image_bytes, batch_size=1):
         """Prepare inputs for inference"""
-        # The model config shows max_batch_size: 32 and dims: [1]
-        # This means the input shape should be [batch_size, 1] for the IMAGE_BYTES
-        if self.use_grpc:
-            input_data = grpcclient.InferInput("IMAGE_BYTES", [batch_size, 1], "BYTES")
-        else:
-            input_data = httpclient.InferInput("IMAGE_BYTES", [batch_size, 1], "BYTES")
+        import base64
         
-        # For batch inference, repeat the image and reshape to [batch_size, 1]
-        if batch_size == 1:
-            # Shape needs to be [1, 1] for single batch
-            input_data.set_data_from_numpy(np.array([[image_bytes]], dtype=object))
+        # Based on the README example, we need to base64 encode the image bytes
+        # The shape should be [batch_size] for the model with max_batch_size: 32
+        image_b64_string = base64.b64encode(image_bytes).decode()
+        
+        if self.use_grpc:
+            input_data = grpcclient.InferInput("IMAGE_BYTES", [batch_size], "BYTES")
         else:
-            # Shape needs to be [batch_size, 1] for multiple batches
-            batch_data = np.array([[image_bytes]] * batch_size, dtype=object)
+            input_data = httpclient.InferInput("IMAGE_BYTES", [batch_size], "BYTES")
+        
+        # For batch inference, repeat the base64 string
+        if batch_size == 1:
+            input_data.set_data_from_numpy(np.array([image_b64_string], dtype=object))
+        else:
+            batch_data = np.array([image_b64_string] * batch_size, dtype=object)
             input_data.set_data_from_numpy(batch_data)
         
         return [input_data]

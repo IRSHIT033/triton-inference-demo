@@ -46,11 +46,13 @@ def test_simple_inference():
         image_bytes = create_test_image()
         print("✅ Created test image")
         
-        # Prepare input with correct shape [1, 1] for batch_size=1
-        # The preprocessing model expects the image bytes as a single object in the array
-        input_data = httpclient.InferInput("IMAGE_BYTES", [1, 1], "BYTES")
-        # Convert bytes to numpy string object for Triton
-        input_data.set_data_from_numpy(np.array([[image_bytes]], dtype=object))
+        # Follow the exact format from README example
+        import base64
+        
+        # The HTTP example uses base64 encoding and shape [1]
+        image_b64_string = base64.b64encode(image_bytes).decode()
+        input_data = httpclient.InferInput("IMAGE_BYTES", [1], "BYTES")
+        input_data.set_data_from_numpy(np.array([image_b64_string], dtype=object))
         
         # Prepare output
         output_data = httpclient.InferRequestedOutput("EMBEDDINGS")
