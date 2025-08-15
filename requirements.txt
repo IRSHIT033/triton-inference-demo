@@ -1,0 +1,12 @@
+torch
+transformers
+onnx
+onnxruntime
+safetensors
+huggingface-hub
+onnxscript
+torchvision
+transformers
+Pillow
+numpy
+tritonclient[http]
