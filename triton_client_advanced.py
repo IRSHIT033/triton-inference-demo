@@ -68,9 +68,15 @@ class AdvancedTritonClient:
         try:
             metadata = self.client.get_server_metadata()
             print("📊 Server Metadata:")
-            print(f"   Name: {metadata.name}")
-            print(f"   Version: {metadata.version}")
-            print(f"   Extensions: {metadata.extensions}")
+            if hasattr(metadata, 'name'):
+                print(f"   Name: {metadata.name}")
+                print(f"   Version: {metadata.version}")
+                print(f"   Extensions: {metadata.extensions}")
+            else:
+                # Handle dictionary response
+                print(f"   Name: {metadata.get('name', 'Unknown')}")
+                print(f"   Version: {metadata.get('version', 'Unknown')}")
+                print(f"   Extensions: {metadata.get('extensions', [])}")
             return metadata
         except Exception as e:
             print(f"❌ Failed to get server metadata: {e}")
@@ -82,7 +88,11 @@ class AdvancedTritonClient:
             models = self.client.get_model_repository_index()
             print("📋 Available models:")
             for model in models:
-                print(f"   - {model.name} (state: {model.state})")
+                if hasattr(model, 'name'):
+                    print(f"   - {model.name} (state: {model.state})")
+                else:
+                    # Handle dictionary response
+                    print(f"   - {model.get('name', 'Unknown')} (state: {model.get('state', 'Unknown')})")
             return models
         except Exception as e:
             print(f"❌ Failed to list models: {e}")
@@ -93,16 +103,36 @@ class AdvancedTritonClient:
         try:
             metadata = self.client.get_model_metadata(self.model_name)
             print(f"🔍 Model '{self.model_name}' Metadata:")
-            print(f"   Platform: {metadata.platform}")
-            print(f"   Versions: {metadata.versions}")
             
-            print("   Inputs:")
-            for input_meta in metadata.inputs:
-                print(f"     - {input_meta.name}: {input_meta.datatype} {input_meta.shape}")
-            
-            print("   Outputs:")
-            for output_meta in metadata.outputs:
-                print(f"     - {output_meta.name}: {output_meta.datatype} {output_meta.shape}")
+            if hasattr(metadata, 'platform'):
+                print(f"   Platform: {metadata.platform}")
+                print(f"   Versions: {metadata.versions}")
+                
+                print("   Inputs:")
+                for input_meta in metadata.inputs:
+                    print(f"     - {input_meta.name}: {input_meta.datatype} {input_meta.shape}")
+                
+                print("   Outputs:")
+                for output_meta in metadata.outputs:
+                    print(f"     - {output_meta.name}: {output_meta.datatype} {output_meta.shape}")
+            else:
+                # Handle dictionary response
+                print(f"   Platform: {metadata.get('platform', 'Unknown')}")
+                print(f"   Versions: {metadata.get('versions', [])}")
+                
+                print("   Inputs:")
+                for input_meta in metadata.get('inputs', []):
+                    if isinstance(input_meta, dict):
+                        print(f"     - {input_meta.get('name')}: {input_meta.get('datatype')} {input_meta.get('shape')}")
+                    else:
+                        print(f"     - {input_meta.name}: {input_meta.datatype} {input_meta.shape}")
+                
+                print("   Outputs:")
+                for output_meta in metadata.get('outputs', []):
+                    if isinstance(output_meta, dict):
+                        print(f"     - {output_meta.get('name')}: {output_meta.get('datatype')} {output_meta.get('shape')}")
+                    else:
+                        print(f"     - {output_meta.name}: {output_meta.datatype} {output_meta.shape}")
                 
             return metadata
         except Exception as e:
@@ -114,13 +144,27 @@ class AdvancedTritonClient:
         try:
             config = self.client.get_model_config(self.model_name)
             print(f"⚙️ Model '{self.model_name}' Configuration:")
-            print(f"   Max batch size: {config.max_batch_size}")
-            print(f"   Platform: {config.platform}")
             
-            if hasattr(config, 'ensemble_scheduling'):
-                print("   Ensemble steps:")
-                for i, step in enumerate(config.ensemble_scheduling.step):
-                    print(f"     {i+1}. {step.model_name} (v{step.model_version})")
+            if hasattr(config, 'max_batch_size'):
+                print(f"   Max batch size: {config.max_batch_size}")
+                print(f"   Platform: {config.platform}")
+                
+                if hasattr(config, 'ensemble_scheduling'):
+                    print("   Ensemble steps:")
+                    for i, step in enumerate(config.ensemble_scheduling.step):
+                        print(f"     {i+1}. {step.model_name} (v{step.model_version})")
+            else:
+                # Handle dictionary response
+                print(f"   Max batch size: {config.get('max_batch_size', 'Unknown')}")
+                print(f"   Platform: {config.get('platform', 'Unknown')}")
+                
+                if 'ensemble_scheduling' in config and 'step' in config['ensemble_scheduling']:
+                    print("   Ensemble steps:")
+                    for i, step in enumerate(config['ensemble_scheduling']['step']):
+                        if isinstance(step, dict):
+                            print(f"     {i+1}. {step.get('model_name')} (v{step.get('model_version')})")
+                        else:
+                            print(f"     {i+1}. {step.model_name} (v{step.model_version})")
             
             return config
         except Exception as e:
@@ -164,16 +208,20 @@ class AdvancedTritonClient:
     
     def prepare_inputs(self, image_bytes, batch_size=1):
         """Prepare inputs for inference"""
+        # The model config shows max_batch_size: 32 and dims: [1]
+        # This means the input shape should be [batch_size, 1] for the IMAGE_BYTES
         if self.use_grpc:
-            input_data = grpcclient.InferInput("IMAGE_BYTES", [batch_size], "BYTES")
+            input_data = grpcclient.InferInput("IMAGE_BYTES", [batch_size, 1], "BYTES")
         else:
-            input_data = httpclient.InferInput("IMAGE_BYTES", [batch_size], "BYTES")
+            input_data = httpclient.InferInput("IMAGE_BYTES", [batch_size, 1], "BYTES")
         
-        # For batch inference, repeat the image
+        # For batch inference, repeat the image and reshape to [batch_size, 1]
         if batch_size == 1:
-            input_data.set_data_from_numpy(np.array([image_bytes], dtype=object))
+            # Shape needs to be [1, 1] for single batch
+            input_data.set_data_from_numpy(np.array([[image_bytes]], dtype=object))
         else:
-            batch_data = np.array([image_bytes] * batch_size, dtype=object)
+            # Shape needs to be [batch_size, 1] for multiple batches
+            batch_data = np.array([[image_bytes]] * batch_size, dtype=object)
             input_data.set_data_from_numpy(batch_data)
         
         return [input_data]
