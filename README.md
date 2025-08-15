@@ -103,7 +103,7 @@ data = {
     "inputs": [
         {
             "name": "IMAGE_BYTES",
-            "shape": [1],
+            "shape": [1, 1],
             "datatype": "BYTES",
             "data": [base64.b64encode(image_bytes).decode()]
         }
