@@ -1,28 +1,27 @@
-name: "dinov2_vit"
+name: "dinov2_trt"
 platform: "tensorrt_plan"
 max_batch_size: 8
+
 input [
   {
-    name: "images"
+    name: "input"
     data_type: TYPE_FP32
     dims: [ 3, 224, 224 ]
   }
 ]
+
 output [
   {
-    name: "features"
+    name: "output"
     data_type: TYPE_FP32
     dims: [ 768 ]
   }
 ]
 
-version_policy: { all { }}
-
 instance_group [
   {
     count: 1
     kind: KIND_GPU
-    gpus: [ 0 ]
   }
 ]
 
@@ -32,8 +31,6 @@ optimization {
       name : "tensorrt"
       parameters { key: "precision_mode" value: "FP16" }
       parameters { key: "max_workspace_size_bytes" value: "1073741824" }
-      parameters { key: "trt_engine_cache_enable" value: "true" }
-      parameters { key: "trt_engine_cache_path" value: "/tmp/trt_cache" }
     }]
   }
 } 

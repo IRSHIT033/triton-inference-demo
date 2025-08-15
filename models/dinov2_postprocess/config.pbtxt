@@ -1,0 +1,26 @@
+name: "dinov2_postprocess"
+backend: "python"
+max_batch_size: 8
+
+input [
+  {
+    name: "FEATURES"
+    data_type: TYPE_FP32
+    dims: [ 768 ]
+  }
+]
+
+output [
+  {
+    name: "NORMALIZED_FEATURES"
+    data_type: TYPE_FP32
+    dims: [ 768 ]
+  }
+]
+
+instance_group [
+  {
+    count: 1
+    kind: KIND_CPU
+  }
+] 
