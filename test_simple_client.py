@@ -7,10 +7,27 @@ import io
 
 def create_test_image():
     """Create a simple test image"""
-    img = Image.new('RGB', (224, 224), color='red')
+    # Create a more realistic test image
+    img = Image.new('RGB', (256, 256), color=(128, 64, 192))
+    
+    # Add some pattern to make it more realistic
+    import numpy as np
+    arr = np.array(img)
+    for i in range(0, 256, 32):
+        arr[i:i+16, :] = [255, 0, 0]  # Red stripes
+    img = Image.fromarray(arr)
+    
+    # Save as JPEG to BytesIO
     img_buffer = io.BytesIO()
-    img.save(img_buffer, format='JPEG')
-    return img_buffer.getvalue()
+    img.save(img_buffer, format='JPEG', quality=95)
+    img_bytes = img_buffer.getvalue()
+    
+    # Verify the image can be read back
+    test_buffer = io.BytesIO(img_bytes)
+    test_img = Image.open(test_buffer)
+    print(f"✅ Created test image: {test_img.size}, mode: {test_img.mode}")
+    
+    return img_bytes
 
 def test_simple_inference():
     """Simple inference test"""
@@ -30,7 +47,9 @@ def test_simple_inference():
         print("✅ Created test image")
         
         # Prepare input with correct shape [1, 1] for batch_size=1
+        # The preprocessing model expects the image bytes as a single object in the array
         input_data = httpclient.InferInput("IMAGE_BYTES", [1, 1], "BYTES")
+        # Convert bytes to numpy string object for Triton
         input_data.set_data_from_numpy(np.array([[image_bytes]], dtype=object))
         
         # Prepare output
