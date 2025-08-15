@@ -11,8 +11,18 @@ RUN pip install --no-cache-dir \
     onnxscript \
     torchvision
 
+# Install additional system dependencies
+RUN apt-get update && apt-get install -y \
+    wget \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
 # Set working directory
 WORKDIR /workspace
+
+# Copy conversion script and make it executable
+COPY convert_to_tensorRT.sh .
+RUN chmod +x convert_to_tensorRT.sh
 
 # Default command
 CMD ["bash"] 

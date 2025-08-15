@@ -27,6 +27,9 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+    depends_on:
+      model-builder:
+        condition: service_completed_successfully
 
   # Service to build models (run once)
   model-builder:
@@ -37,6 +40,7 @@ services:
     volumes:
       - ./models:/workspace/models
       - .:/workspace/src
+      - ./logs:/workspace/logs
     working_dir: /workspace/src
     environment:
       - CUDA_VISIBLE_DEVICES=0

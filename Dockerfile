@@ -14,22 +14,6 @@ RUN pip install --no-cache-dir \
     torchvision \
     tritonclient[http]
 
-# Set working directory
-WORKDIR /workspace
-
-# Copy requirements for reference
-COPY requirements.txt .
-
-# Copy model repository
-COPY models/ /models/
-
-# Copy setup scripts
-COPY export_model_onnx.py .
-COPY setup_models.sh .
-
-# Make scripts executable
-RUN chmod +x setup_models.sh
-
 # Expose Triton server ports
 EXPOSE 8000 8001 8002
 
