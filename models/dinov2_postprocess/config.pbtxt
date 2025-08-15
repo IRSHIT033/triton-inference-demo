@@ -1,26 +1,8 @@
 name: "dinov2_postprocess"
 backend: "python"
-max_batch_size: 8
+max_batch_size: 32
 
-input [
-  {
-    name: "FEATURES"
-    data_type: TYPE_FP32
-    dims: [ 768 ]
-  }
-]
+input  [{ name: "raw_embeds" data_type: TYPE_FP32 dims: [ 768 ] }]
+output [{ name: "embeddings" data_type: TYPE_FP32 dims: [ 768 ] }]
 
-output [
-  {
-    name: "NORMALIZED_FEATURES"
-    data_type: TYPE_FP32
-    dims: [ 768 ]
-  }
-]
-
-instance_group [
-  {
-    count: 1
-    kind: KIND_CPU
-  }
-] 
+instance_group [{ kind: KIND_CPU }]

@@ -1,55 +1,47 @@
-import triton_python_backend_utils as pb_utils
+import io
 import numpy as np
-import torch
 from PIL import Image
-import torchvision.transforms as transforms
+import triton_python_backend_utils as pb_utils
 
+# ImageNet mean/std used by DINOv2 preprocessor
+MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+STD  = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+
+def resize_short_side(img, short=256):
+    w, h = img.size
+    if w <= h:
+        new_w = short
+        new_h = int(round(h * short / w))
+    else:
+        new_h = short
+        new_w = int(round(w * short / h))
+    return img.resize((new_w, new_h), Image.BILINEAR)
+
+def center_crop(img, size=224):
+    w, h = img.size
+    left = int(round((w - size) / 2.0))
+    top  = int(round((h - size) / 2.0))
+    return img.crop((left, top, left + size, top + size))
 
 class TritonPythonModel:
-    """DINOv2 Preprocessing Model"""
-    
     def initialize(self, args):
-        """Initialize the model"""
-        self.transform = transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], 
-                               std=[0.229, 0.224, 0.225])
-        ])
-    
+        pass
+
     def execute(self, requests):
-        """Execute preprocessing on batch of requests"""
         responses = []
-        
-        for request in requests:
-            # Get input image
-            input_image = pb_utils.get_input_tensor_by_name(request, "INPUT_IMAGE")
-            image_data = input_image.as_numpy()
-            
-            # Process image
-            processed_images = []
-            for img in image_data:
-                # Convert numpy array to PIL Image
-                pil_image = Image.fromarray(img.astype('uint8'))
-                # Apply transforms
-                processed_tensor = self.transform(pil_image)
-                processed_images.append(processed_tensor.numpy())
-            
-            # Stack batch
-            batch_tensor = np.stack(processed_images)
-            
-            # Create output tensor
-            output_tensor = pb_utils.Tensor("PREPROCESSED_IMAGE", batch_tensor)
-            
-            # Create response
-            inference_response = pb_utils.InferenceResponse(
-                output_tensors=[output_tensor]
-            )
-            responses.append(inference_response)
-        
+        for req in requests:
+            inp = pb_utils.get_input_tensor_by_name(req, "IMAGE_BYTES")
+            bstr = inp.as_numpy()[0]  # dtype=object
+            img = Image.open(io.BytesIO(bstr.tobytes())).convert("RGB")
+
+            img = resize_short_side(img, 256)
+            img = center_crop(img, 224)
+
+            arr = np.asarray(img, dtype=np.float32) / 255.0  # [H,W,3]
+            arr = (arr - MEAN) / STD
+            arr = arr.transpose(2, 0, 1)  # [3,224,224]
+            arr = arr.astype(np.float32)
+
+            out = pb_utils.Tensor("pixel_values", arr)
+            responses.append(pb_utils.InferenceResponse(output_tensors=[out]))
         return responses
-    
-    def finalize(self):
-        """Clean up resources"""
-        pass 

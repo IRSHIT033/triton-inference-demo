@@ -1,36 +1,21 @@
 name: "dinov2_trt"
-platform: "tensorrt_plan"
-max_batch_size: 8
+# Either backend or platform is fine; backend is the modern field
+backend: "tensorrt"
+# platform: "tensorrt_plan"
+
+max_batch_size: 32
 
 input [
-  {
-    name: "input"
-    data_type: TYPE_FP32
-    dims: [ 3, 224, 224 ]
-  }
+  { name: "pixel_values" data_type: TYPE_FP32 dims: [ 3, 224, 224 ] }
 ]
-
 output [
-  {
-    name: "output"
-    data_type: TYPE_FP32
-    dims: [ 768 ]
-  }
+  # For dinov2-base this is 768; adjust for S=384, L=1024, g=1536
+  { name: "image_embeds" data_type: TYPE_FP32 dims: [ 768 ] }
 ]
 
-instance_group [
-  {
-    count: 1
-    kind: KIND_GPU
-  }
-]
+dynamic_batching {
+  preferred_batch_size: [ 4, 8, 16, 32 ]
+  max_queue_delay_microseconds: 1000
+}
 
-optimization {
-  execution_accelerators {
-    gpu_execution_accelerator : [ {
-      name : "tensorrt"
-      parameters { key: "precision_mode" value: "FP16" }
-      parameters { key: "max_workspace_size_bytes" value: "1073741824" }
-    }]
-  }
-} 
+instance_group [{ kind: KIND_GPU }]
