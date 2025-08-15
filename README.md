@@ -18,11 +18,11 @@ First, build the ONNX and TensorRT models:
 
 ```bash
 # Build and run the model builder
-docker-compose --profile build up model-builder
+docker compose --profile build up model-builder
 
 # Or run manually:
-docker-compose build model-builder
-docker-compose run --rm model-builder
+docker compose build model-builder
+docker compose run --rm model-builder
 ```
 
 ### 2. Start Triton Server
@@ -30,7 +30,7 @@ docker-compose run --rm model-builder
 Once models are built, start the Triton server:
 
 ```bash
-docker-compose up triton-server
+docker compose up triton-server
 ```
 
 The server will be available at:

@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   triton-server:
     build:
@@ -52,4 +50,4 @@ services:
     profiles:
       - build
     command:
-      ["bash", "-c", "python export_model_onnx.py && ./convert_to_tensorrt.sh"]
+      ["bash", "-c", "python export_model_onnx.py && ./convert_to_tensorRT.sh"]
