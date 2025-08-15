@@ -1,18 +1,20 @@
-# From the folder that contains dinov2_base_cls.onnx
-docker run --gpus=all --rm -it -v $PWD:/workspace nvcr.io/nvidia/tensorrt:24.08-py3 bash
-# inside the container:
-cd /workspace
+#!/bin/bash
+
+echo "Converting ONNX model to TensorRT..."
+
+# Check if ONNX model exists
+if [ ! -f "dinov2_base_cls.onnx" ]; then
+    echo "Error: dinov2_base_cls.onnx not found. Please run export_model_onnx.py first."
+    exit 1
+fi
+
+# Create the TensorRT model directory
+mkdir -p models/dinov2_trt/1
+
+# Convert ONNX to TensorRT
 trtexec \
   --onnx=dinov2_base_cls.onnx \
-  --saveEngine=model.plan \
-  --fp16 \
-  --profilingVerbosity=detailed \
-  --timingCacheFile=dinov2.timing
-
-
-trtexec \
-  --onnx=dinov2_base_cls.onnx \
-  --saveEngine=model.plan \
+  --saveEngine=models/dinov2_trt/1/model.plan \
   --fp16 \
   --minShapes=pixel_values:1x3x224x224 \
   --optShapes=pixel_values:8x3x224x224 \
@@ -20,3 +22,12 @@ trtexec \
   --shapes=pixel_values:8x3x224x224 \
   --profilingVerbosity=detailed \
   --timingCacheFile=dinov2.timing
+
+# Check if conversion was successful
+if [ -f "models/dinov2_trt/1/model.plan" ]; then
+    echo "TensorRT model created successfully at models/dinov2_trt/1/model.plan"
+    ls -la models/dinov2_trt/1/
+else
+    echo "Error: TensorRT conversion failed"
+    exit 1
+fi

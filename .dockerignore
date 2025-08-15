@@ -1,0 +1,16 @@
+.git
+.gitignore
+*.md
+logs/
+*.log
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.coverage
+.pytest_cache/
+dinov2_base_cls.onnx
+*.timing
+models/dinov2_trt/1/model.plan 
