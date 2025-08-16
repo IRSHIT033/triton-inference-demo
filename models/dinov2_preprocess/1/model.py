@@ -1,4 +1,5 @@
 import io
+import base64
 import numpy as np
 from PIL import Image
 import triton_python_backend_utils as pb_utils
@@ -32,7 +33,16 @@ class TritonPythonModel:
         for req in requests:
             inp = pb_utils.get_input_tensor_by_name(req, "IMAGE_BYTES")
             bstr = inp.as_numpy()[0]  # dtype=object
-            img = Image.open(io.BytesIO(bstr.tobytes())).convert("RGB")
+            
+            # Handle both base64-encoded strings (HTTP) and raw bytes (gRPC)
+            if isinstance(bstr, str):
+                # HTTP client sends base64-encoded strings
+                image_bytes = base64.b64decode(bstr)
+            else:
+                # gRPC client sends raw bytes
+                image_bytes = bstr.tobytes() if hasattr(bstr, 'tobytes') else bstr
+            
+            img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
 
             img = resize_short_side(img, 256)
             img = center_crop(img, 224)
