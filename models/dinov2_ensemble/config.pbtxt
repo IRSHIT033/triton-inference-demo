@@ -3,7 +3,7 @@ platform: "ensemble"
 max_batch_size: 32
 
 input  [{ name: "IMAGE_BYTES" data_type: TYPE_STRING dims: [ 1 ] }]
-output [{ name: "EMBEDDINGS"  data_type: TYPE_FP32  dims: [ 768 ] }]
+output [{ name: "EMBEDDINGS"  data_type: TYPE_FP32  dims: [ -1, 768 ] }]
 
 ensemble_scheduling {
   step [

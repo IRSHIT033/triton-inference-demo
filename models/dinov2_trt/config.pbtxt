@@ -6,11 +6,11 @@ backend: "tensorrt"
 max_batch_size: 32
 
 input [
-  { name: "pixel_values" data_type: TYPE_FP32 dims: [ 3, 224, 224 ] }
+  { name: "pixel_values" data_type: TYPE_FP32 dims: [ -1, 3, 224, 224 ] }
 ]
 output [
   # For dinov2-base this is 768; adjust for S=384, L=1024, g=1536
-  { name: "image_embeds" data_type: TYPE_FP32 dims: [ 768 ] }
+  { name: "image_embeds" data_type: TYPE_FP32 dims: [ -1, 768 ] }
 ]
 
 dynamic_batching {
