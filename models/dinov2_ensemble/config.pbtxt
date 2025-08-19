@@ -13,7 +13,7 @@ input [
 output [
   {
     name: "features"
-    data_type: TYPE_FP16    # changed to FP16 for consistency
+    data_type: TYPE_FP32    # matches dinov2 model's actual FP32 output
     dims: [ -1 ]
   }
 ]

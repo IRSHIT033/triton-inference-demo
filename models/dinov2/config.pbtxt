@@ -13,7 +13,7 @@ input [
 output [
   {
     name: "features"
-    data_type: TYPE_FP16   # changed to FP16 for consistency
+    data_type: TYPE_FP32   # TensorRT model outputs FP32 despite --fp16 flag
     dims: [ -1 ]           # TRT fills actual embedding dim (e.g., 768)
   }
 ]
