@@ -16,10 +16,10 @@ trtexec \
   --onnx=dinov2_base_cls.onnx \
   --saveEngine=models/dinov2/1/model.plan \
   --fp16 \
-  --minShapes=input:1x3x224x224 \
-  --optShapes=input:8x3x224x224 \
-  --maxShapes=input:32x3x224x224 \
-  --shapes=input:8x3x224x224 \
+  --minShapes=pixel_values:1x3x224x224 \
+  --optShapes=pixel_values:8x3x224x224 \
+  --maxShapes=pixel_values:32x3x224x224 \
+  --shapes=pixel_values:8x3x224x224 \
   --profilingVerbosity=detailed \
   --timingCacheFile=dinov2.timing
 
