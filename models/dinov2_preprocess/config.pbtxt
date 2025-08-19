@@ -13,7 +13,7 @@ input [
 output [
   {
     name: "input"          # must match dinov2 input name
-    data_type: TYPE_FP16   # use TYPE_FP32 if your plan is FP32
+    data_type: TYPE_FP32   # use TYPE_FP32 if your plan is FP32
     dims: [ 3, 224, 224 ]
   }
 ]
