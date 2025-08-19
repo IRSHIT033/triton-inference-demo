@@ -5,7 +5,7 @@ max_batch_size: 32
 input [
   {
     name: "IMAGE"
-    data_type: TYPE_BYTES
+    data_type: TYPE_STRING
     dims: [ 1 ]  # 1 byte string per sample
   }
 ]
@@ -13,7 +13,7 @@ input [
 output [
   {
     name: "input"          # must match dinov2 input name
-    data_type: TYPE_FP32   # use TYPE_FP32 if your plan is FP32
+    data_type: TYPE_FP16   # changed to FP16 to match model.py output
     dims: [ 3, 224, 224 ]
   }
 ]

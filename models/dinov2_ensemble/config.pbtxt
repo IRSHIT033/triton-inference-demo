@@ -5,7 +5,7 @@ max_batch_size: 32
 input [
   {
     name: "IMAGE"
-    data_type: TYPE_BYTES
+    data_type: TYPE_STRING
     dims: [ 1 ]
   }
 ]
@@ -13,7 +13,7 @@ input [
 output [
   {
     name: "features"
-    data_type: TYPE_FP32    # TYPE_FP32 if using FP32 path
+    data_type: TYPE_FP16    # changed to FP16 for consistency
     dims: [ -1 ]
   }
 ]

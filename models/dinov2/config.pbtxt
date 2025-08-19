@@ -5,7 +5,7 @@ max_batch_size: 32
 input [
   {
     name: "input"          # must match preproc output tensor name
-    data_type: TYPE_FP32   # set to TYPE_FP32 if your engine is FP32
+    data_type: TYPE_FP16   # changed to FP16 to match preproc output
     dims: [ 3, 224, 224 ]
   }
 ]
@@ -13,7 +13,7 @@ input [
 output [
   {
     name: "features"
-    data_type: TYPE_FP32   # TYPE_FP32 if engine is FP32
+    data_type: TYPE_FP16   # changed to FP16 for consistency
     dims: [ -1 ]           # TRT fills actual embedding dim (e.g., 768)
   }
 ]
