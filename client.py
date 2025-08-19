@@ -8,7 +8,8 @@ with open(img_path, "rb") as f:
     data = f.read()
 
 # Triton expects raw bytes as string for TYPE_STRING
-arr = np.array([[data]], dtype=object)  # shape [1,1] - raw bytes as string
+# Use latin1 encoding to preserve all byte values when converting to string
+arr = np.array([[data.decode('latin1')]], dtype=object)  # shape [1,1] - bytes as string
 
 cli = InferenceServerClient("localhost:8000")
 inp = InferInput("IMAGE", arr.shape, "STRING")
