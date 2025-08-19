@@ -9,24 +9,24 @@ if [ ! -f "dinov2_base_cls.onnx" ]; then
 fi
 
 # Create the TensorRT model directory
-mkdir -p models/dinov2_trt/1
+mkdir -p models/dinov2/1
 
 # Convert ONNX to TensorRT
 trtexec \
   --onnx=dinov2_base_cls.onnx \
-  --saveEngine=models/dinov2_trt/1/model.plan \
+  --saveEngine=models/dinov2/1/model.plan \
   --fp16 \
-  --minShapes=pixel_values:1x3x224x224 \
-  --optShapes=pixel_values:8x3x224x224 \
-  --maxShapes=pixel_values:32x3x224x224 \
-  --shapes=pixel_values:8x3x224x224 \
+  --minShapes=input:1x3x224x224 \
+  --optShapes=input:8x3x224x224 \
+  --maxShapes=input:32x3x224x224 \
+  --shapes=input:8x3x224x224 \
   --profilingVerbosity=detailed \
   --timingCacheFile=dinov2.timing
 
 # Check if conversion was successful
-if [ -f "models/dinov2_trt/1/model.plan" ]; then
-    echo "TensorRT model created successfully at models/dinov2_trt/1/model.plan"
-    ls -la models/dinov2_trt/1/
+if [ -f "models/dinov2/1/model.plan" ]; then
+    echo "TensorRT model created successfully at models/dinov2/1/model.plan"
+    ls -la models/dinov2/1/
 else
     echo "Error: TensorRT conversion failed"
     exit 1

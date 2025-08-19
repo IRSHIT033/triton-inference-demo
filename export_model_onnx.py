@@ -1,36 +1,38 @@
-# export_dinov2_onnx.py
 import torch
-# 1) load dinov2
-base = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14', pretrained=True, source='github').eval().cuda()
+from torch.export import Dim
+from transformers import AutoModel
 
-# 2) wrapper -> [N, D] (CLS)
-class Wrapper(torch.nn.Module):
-    def __init__(self, m): super().__init__(); self.m = m
-    def forward(self, x):
-        out = self.m.forward_features(x)  # dict
-        for k in ("x_norm_clstoken", "cls_token", "x_cls", "x"):
-            if isinstance(out, dict) and k in out:
-                x = out[k]; break
-        else:
-            x = next(v for v in out.values() if isinstance(v, torch.Tensor))
-        return torch.nn.functional.normalize(x, dim=-1)
+# Wrap to expose CLS embedding only
+class DinoCLS(torch.nn.Module):
+    def __init__(self, base):
+        super().__init__()
+        self.base = base.eval()
+    def forward(self, pixel_values):
+        out = self.base(pixel_values=pixel_values)
+        return out.last_hidden_state[:, 0, :]  # [B, H]
 
-model = Wrapper(base).eval().cuda()
+model_id = "facebook/dinov2-base"
+wrapped = DinoCLS(AutoModel.from_pretrained(model_id)).eval()
 
-# 3) sample input
-dummy = torch.randn(1, 3, 224, 224, device="cuda")
+dummy = torch.randn(1, 3, 224, 224, dtype=torch.float32)
 
-# 4) dynamic shapes for dynamo export - key must match forward() arg name
+# Only describe inputs here (no outputs!)
 dynamic_shapes = {
-    "x": {0: torch.export.Dim("batch_size", min=1, max=32)},
+    "input": {  # Changed from "pixel_values" to match Triton pipeline
+        0: Dim("batch",  min=1,  max=32),
+        2: Dim("height", min=224, max=1024),
+        3: Dim("width",  min=224, max=1024),
+    }
 }
 
-# 5) export with dynamo=True
 torch.onnx.export(
-    model, dummy, "dinov2.onnx",
-    input_names=["input"], output_names=["features"],
-    opset_version=18,
-    dynamo=True,
-    dynamic_shapes=dynamic_shapes,
+    wrapped,
+    (dummy,),
+    "dinov2_base_cls.onnx",
+    input_names=["input"],      # Changed from "pixel_values"
+    output_names=["features"],  # Changed from "image_embeds"
+    opset_version=18,          # 18+ recommended for shape ops
+    do_constant_folding=True,
+    dynamo=True,               # using the new exporter
+    dynamic_shapes=dynamic_shapes
 )
-print("Wrote dinov2.onnx")
