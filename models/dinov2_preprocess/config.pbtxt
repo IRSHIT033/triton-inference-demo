@@ -1,4 +1,4 @@
-name: "preproc"
+name: "dinov2_preprocess"
 backend: "python"
 max_batch_size: 32
 

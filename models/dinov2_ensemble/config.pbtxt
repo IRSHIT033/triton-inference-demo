@@ -21,7 +21,7 @@ output [
 ensemble_scheduling {
   step [
     {
-      model_name: "preproc"
+      model_name: "dinov2_preprocess"
       model_version: -1
       input_map { key: "IMAGE" value: "IMAGE" }
       output_map { key: "input" value: "preproc_out" }
