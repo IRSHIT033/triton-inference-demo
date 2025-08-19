@@ -45,10 +45,7 @@ services:
     command: >
       bash -c "
       pip install Pillow &&
-      tritonserver
-        --model-repository=/workspace/models
-        --exit-on-error=false
-        --disable-auto-complete-config
+      tritonserver --model-repository=/workspace/models --exit-on-error=false --disable-auto-complete-config
       "
 
   # 3) Optional: minimal HTTP client you can "run" via Compose
