@@ -7,11 +7,11 @@ img_path = "image.jpg"
 with open(img_path, "rb") as f:
     data = f.read()
 
-# Triton expects bytes in an object array for TYPE_BYTES
-arr = np.array([[np.frombuffer(data, dtype=np.uint8)]], dtype=object)  # shape [1,1]
+# Triton expects raw bytes as string for TYPE_STRING
+arr = np.array([[data]], dtype=object)  # shape [1,1] - raw bytes as string
 
 cli = InferenceServerClient("localhost:8000")
-inp = InferInput("IMAGE", arr.shape, "BYTES")
+inp = InferInput("IMAGE", arr.shape, "STRING")
 inp.set_data_from_numpy(arr)
 
 out = InferRequestedOutput("features")
