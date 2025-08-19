@@ -14,7 +14,7 @@ class DinoCLS(torch.nn.Module):
 model_id = "facebook/dinov2-base"
 wrapped = DinoCLS(AutoModel.from_pretrained(model_id)).eval()
 
-dummy = torch.randn(1, 3, 224, 224, dtype=torch.float32)
+dummy = torch.randn(1, 3, 224, 224, dtype=torch.float16)
 
 # Only describe inputs here (no outputs!)
 dynamic_shapes = {
