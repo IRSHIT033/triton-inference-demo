@@ -1,7 +1,5 @@
 # export_dinov2_onnx.py
 import torch
-from torch.onnx import DynamicDim  # if not available in your version, see Option 2 below
-
 # 1) load dinov2
 base = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14', pretrained=True, source='github').eval().cuda()
 
@@ -22,18 +20,17 @@ model = Wrapper(base).eval().cuda()
 # 3) sample input
 dummy = torch.randn(1, 3, 224, 224, device="cuda")
 
-# 4) dynamic batch (1..32)
-dyn = {
-    "input":   {0: DynamicDim(name="batch", min=1, max=32)},
-    "features":{0: "batch"},   # tie output batch to same symbol
+# 4) dynamic shapes for dynamo export
+dynamic_shapes = {
+    "input": {0: torch.export.Dim("batch_size", min=1, max=32)},
 }
 
-# 5) export (no dynamic_axes when dynamo=True)
+# 5) export with dynamo=True
 torch.onnx.export(
     model, dummy, "dinov2.onnx",
     input_names=["input"], output_names=["features"],
     opset_version=18,
     dynamo=True,
-    dynamic_shapes=dyn,
+    dynamic_shapes=dynamic_shapes,
 )
 print("Wrote dinov2.onnx")
