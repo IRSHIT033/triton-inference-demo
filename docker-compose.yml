@@ -26,7 +26,7 @@ services:
       pip install -r requirements.txt &&
       python export_model_onnx.py &&
       mkdir -p models/dinov2/1 &&
-      trtexec --onnx=dinov2_base_cls.onnx --saveEngine=/workspace/models/dinov2/1/model.plan --minShapes=input:1x3x224x224 --optShapes=input:8x3x224x224 --maxShapes=input:32x3x224x224 --fp16 --inputIOFormats=fp16:chw --outputIOFormats=fp16:chw --verbose
+      trtexec --onnx=dinov2_base_cls.onnx --saveEngine=models/dinov2/1/model.plan --fp16 --minShapes=input:1x3x224x224 --optShapes=input:8x3x224x224 --maxShapes=input:32x3x224x224 --shapes=input:8x3x224x224 --profilingVerbosity=detailed --timingCacheFile=dinov2.timing
       "
 
   # 2) Run Triton with the baked model repo (preproc + dinov2 + ensemble)
