@@ -24,14 +24,15 @@ services:
     command: >
       bash -lc "
       mkdir -p models/dinov2/1 &&
-      trtexec
-        --onnx=/workspace/artifacts/dinov2.onnx
-        --saveEngine=/workspace/models/dinov2/1/model.plan
-        --minShapes=input:1x3x224x224
-        --optShapes=input:8x3x224x224
-        --maxShapes=input:32x3x224x224
-        --fp16
-        --workspace=4096
+      trtexec \
+        --onnx=/workspace/artifacts/dinov2.onnx \
+        --saveEngine=/workspace/models/dinov2/1/model.plan \
+        --minShapes=input:1x3x224x224 \
+        --optShapes=input:8x3x224x224 \
+        --maxShapes=input:32x3x224x224 \
+        --fp16 \
+        --workspace=4096 \
+        --verbose
       "
 
   # 2) Run Triton with the baked model repo (preproc + dinov2 + ensemble)
