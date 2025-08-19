@@ -20,9 +20,9 @@ model = Wrapper(base).eval().cuda()
 # 3) sample input
 dummy = torch.randn(1, 3, 224, 224, device="cuda")
 
-# 4) dynamic shapes for dynamo export
+# 4) dynamic shapes for dynamo export - key must match forward() arg name
 dynamic_shapes = {
-    "input": {0: torch.export.Dim("batch_size", min=1, max=32)},
+    "x": {0: torch.export.Dim("batch_size", min=1, max=32)},
 }
 
 # 5) export with dynamo=True
