@@ -10,7 +10,7 @@ with open(img_path, "rb") as f:
 # Triton expects bytes in an object array for TYPE_BYTES
 arr = np.array([[np.frombuffer(data, dtype=np.uint8)]], dtype=object)  # shape [1,1]
 
-cli = InferenceServerClient("http://localhost:8000")
+cli = InferenceServerClient("localhost:8000")
 inp = InferInput("IMAGE", arr.shape, "BYTES")
 inp.set_data_from_numpy(arr)
 
