@@ -19,12 +19,14 @@ services:
     environment: *gpu_env
     <<: *gpu_deploy
     volumes:
-      - ./artifacts:/workspace/artifacts # expects artifacts/dinov2.onnx
+      - .:/workspace # mount entire project directory
       - ./models:/workspace/models # will write models/dinov2/1/model.plan
     command: >
       bash -c "
+      pip install torch transformers &&
+      python export_model_onnx.py &&
       mkdir -p models/dinov2/1 &&
-      trtexec --onnx=/workspace/artifacts/dinov2.onnx --saveEngine=/workspace/models/dinov2/1/model.plan --minShapes=input:1x3x224x224 --optShapes=input:8x3x224x224 --maxShapes=input:32x3x224x224 --fp16 --verbose
+      trtexec --onnx=dinov2_base_cls.onnx --saveEngine=/workspace/models/dinov2/1/model.plan --minShapes=input:1x3x224x224 --optShapes=input:8x3x224x224 --maxShapes=input:32x3x224x224 --fp16 --verbose
       "
 
   # 2) Run Triton with the baked model repo (preproc + dinov2 + ensemble)
@@ -52,13 +54,13 @@ services:
     profiles: ["client"]
     working_dir: /app
     volumes:
-      - ./clients:/app
+      - .:/app
     environment:
       TRITON_URL: "http://triton:8000"
     command: >
       bash -lc "
-        pip install --no-cache-dir numpy tritonclient[http] opencv-python-headless &&
-        python client_ensemble.py
+        pip install --no-cache-dir -r client_requirements.txt &&
+        python client.py
       "
     depends_on:
       - triton
