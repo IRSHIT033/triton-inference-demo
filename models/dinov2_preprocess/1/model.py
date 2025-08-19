@@ -20,7 +20,7 @@ class TritonPythonModel:
             out = np.empty((bs, 3, IM_SIZE, IM_SIZE), dtype=np.float16)  # FP16
 
             for i in range(bs):
-                b = img_bytes[i, 0].tobytes()
+                b = img_bytes[i, 0]  # This is already bytes, no need for .tobytes()
                 img = Image.open(io.BytesIO(b)).convert("RGB")
                 img = img.resize((IM_SIZE, IM_SIZE), Image.BILINEAR)
                 x = np.asarray(img, dtype=np.float32) / 255.0  # HWC float32
