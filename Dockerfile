@@ -1,21 +1,14 @@
-FROM nvcr.io/nvidia/tritonserver:24.08-py3
+FROM nvcr.io/nvidia/tritonserver:24.05-py3
 
-# Install Python dependencies required by the models
-RUN pip install --no-cache-dir \
-    Pillow \
-    numpy \
-    torch \
-    transformers \
-    onnx \
-    onnxruntime \
-    safetensors \
-    huggingface-hub \
-    onnxscript \
-    torchvision \
-    tritonclient[http]
+# Install runtime deps for Python backend
+RUN pip install --no-cache-dir pillow numpy
 
-# Expose Triton server ports
+# Copy your model repository
+COPY models /models
+
+# (Optional) quick health check script
+RUN echo '#!/usr/bin/env bash\ntritonserver --model-repository=/models --exit-on-error=false --disable-auto-complete-config' > /entrypoint.sh \
+ && chmod +x /entrypoint.sh
+
 EXPOSE 8000 8001 8002
-
-# Default command to run Triton server
-CMD ["tritonserver", "--model-repository=/models", "--backend-config=tensorrt,coalesce-request-input=true"] 
+CMD ["/entrypoint.sh"]

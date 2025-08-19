@@ -1,53 +1,71 @@
+x-gpu-env: &gpu_env
+  NVIDIA_VISIBLE_DEVICES: "all"
+  NVIDIA_DRIVER_CAPABILITIES: "compute,utility"
+
+x-gpu-deploy: &gpu_deploy
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            capabilities: ["gpu"]
+
 services:
-  triton-server:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: dinov2-triton-server
+  # 1) Build the TensorRT engine (.plan) from your ONNX
+  trt_builder:
+    image: nvcr.io/nvidia/tensorrt:24.05-py3
+    profiles: ["builder"]
+    working_dir: /workspace
+    environment: *gpu_env
+    <<: *gpu_deploy
+    volumes:
+      - ./artifacts:/workspace/artifacts # expects artifacts/dinov2.onnx
+      - ./models:/workspace/models # will write models/dinov2/1/model.plan
+    command: >
+      bash -lc "
+      mkdir -p models/dinov2/1 &&
+      trtexec
+        --onnx=/workspace/artifacts/dinov2.onnx
+        --saveEngine=/workspace/models/dinov2/1/model.plan
+        --minShapes=input:1x3x224x224
+        --optShapes=input:8x3x224x224
+        --maxShapes=input:32x3x224x224
+        --fp16
+        --workspace=4096
+      "
+
+  # 2) Run Triton with the baked model repo (preproc + dinov2 + ensemble)
+  triton:
+    image: nvcr.io/nvidia/tritonserver:24.05-py3
+    profiles: ["triton"]
+    working_dir: /workspace
+    environment: *gpu_env
+    <<: *gpu_deploy
     ports:
       - "8000:8000" # HTTP
-      - "8001:8001" # GRPC
+      - "8001:8001" # gRPC
       - "8002:8002" # Metrics
     volumes:
-      - ./models:/models
-      - ./logs:/logs
-    environment:
-      - CUDA_VISIBLE_DEVICES=0
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/v2/health/ready"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-
-  # Service to build models (run once)
-  model-builder:
-    build:
-      context: .
-      dockerfile: Dockerfile.builder
-    container_name: dinov2-model-builder
-    volumes:
       - ./models:/workspace/models
-      - .:/workspace/src
-      - ./logs:/workspace/logs
-    working_dir: /workspace/src
+    command: >
+      tritonserver
+        --model-repository=/workspace/models
+        --exit-on-error=false
+        --disable-auto-complete-config
+
+  # 3) Optional: minimal HTTP client you can "run" via Compose
+  client:
+    image: python:3.11-slim
+    profiles: ["client"]
+    working_dir: /app
+    volumes:
+      - ./clients:/app
     environment:
-      - CUDA_VISIBLE_DEVICES=0
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-    profiles:
-      - build
-    command:
-      ["bash", "-c", "python export_model_onnx.py && ./convert_to_tensorRT.sh"]
+      TRITON_URL: "http://triton:8000"
+    command: >
+      bash -lc "
+        pip install --no-cache-dir numpy tritonclient[http] opencv-python-headless &&
+        python client_ensemble.py
+      "
+    depends_on:
+      - triton

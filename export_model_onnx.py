@@ -1,38 +1,36 @@
+# export_dinov2_onnx.py
 import torch
-from torch.export import Dim
-from transformers import AutoModel
+from torchvision import transforms
+# pip install dinov2 torch torchvision  (or install from facebookresearch/dinov2)
+from dinov2.models.vision_transformer import dinov2_vitb14
 
-# Wrap to expose CLS embedding only
-class DinoCLS(torch.nn.Module):
-    def __init__(self, base):
+model = dinov2_vitb14(pretrained=True)
+model.eval().cuda()
+
+dummy = torch.randn(1, 3, 224, 224, device="cuda")  # NCHW, already normalized later in client/preproc
+
+# If you want features before classifier, make sure your forward returns them.
+# The stock DINOv2 ViTs expose features via .forward_features(x)
+class Wrapper(torch.nn.Module):
+    def __init__(self, m):
         super().__init__()
-        self.base = base.eval()
-    def forward(self, pixel_values):
-        out = self.base(pixel_values=pixel_values)
-        return out.last_hidden_state[:, 0, :]  # [B, H]
+        self.m = m
+    def forward(self, x):
+        feats = self.m.forward_features(x)  # [N, D]
+        # Return L2-normalized global features (common for DINOv2)
+        feats = torch.nn.functional.normalize(feats, dim=-1)
+        return feats
 
-model_id = "facebook/dinov2-base"
-wrapped = DinoCLS(AutoModel.from_pretrained(model_id)).eval()
-
-dummy = torch.randn(1, 3, 224, 224, dtype=torch.float32)
-
-# Only describe inputs here (no outputs!)
-dynamic_shapes = {
-    "pixel_values": {
-        0: Dim("batch",  min=1,  max=32),
-        2: Dim("height", min=224, max=1024),
-        3: Dim("width",  min=224, max=1024),
-    }
-}
+wrapped = Wrapper(model).eval().cuda()
 
 torch.onnx.export(
     wrapped,
-    (dummy,),
-    "dinov2_base_cls.onnx",
-    input_names=["pixel_values"],
-    output_names=["image_embeds"],
-    opset_version=18,          # 18+ recommended for shape ops
+    dummy,
+    "dinov2.onnx",
+    input_names=["input"],
+    output_names=["features"],
+    opset_version=17,
     do_constant_folding=True,
-    dynamo=True,               # using the new exporter
-    dynamic_shapes=dynamic_shapes
+    dynamic_axes={"input": {0: "batch"}, "features": {0: "batch"}},  # dynamic batch
 )
+print("Wrote dinov2.onnx")

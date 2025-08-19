@@ -1,0 +1,29 @@
+name: "dinov2"
+platform: "tensorrt_plan"
+max_batch_size: 32
+
+input [
+  {
+    name: "input"          # must match preproc output tensor name
+    data_type: TYPE_FP16   # set to TYPE_FP32 if your engine is FP32
+    dims: [ 3, 224, 224 ]
+  }
+]
+
+output [
+  {
+    name: "features"
+    data_type: TYPE_FP16   # TYPE_FP32 if engine is FP32
+    dims: [ -1 ]           # TRT fills actual embedding dim (e.g., 768)
+  }
+]
+
+instance_group [{ kind: KIND_GPU, count: 1 }]
+
+dynamic_batching {
+  preferred_batch_size: [ 4, 8, 16 ]
+  max_queue_delay_microseconds: 2000
+}
+
+optimization { execution_accelerators { gpu_execution_accelerator: [{ name: "tensorrt" }] } }
+parameters: { key: "execution_order" value: { string_value: "IN_ORDER" } }
