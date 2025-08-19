@@ -28,6 +28,10 @@ class TritonPythonModel:
                 x = np.transpose(x, (2, 0, 1))  # to CHW
                 out[i] = x.astype(np.float16)
 
-            out_tensor = pb_utils.Tensor("input", out)  # name must match downstream
+            # Ensure the output tensor is explicitly FP16
+            # Double-check the dtype and make sure it's contiguous
+            out_fp16 = np.ascontiguousarray(out, dtype=np.float16)
+            print(f"DEBUG: Output tensor dtype: {out_fp16.dtype}, shape: {out_fp16.shape}")
+            out_tensor = pb_utils.Tensor("input", out_fp16)
             responses.append(pb_utils.InferenceResponse(output_tensors=[out_tensor]))
         return responses
