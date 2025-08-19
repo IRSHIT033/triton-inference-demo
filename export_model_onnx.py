@@ -42,7 +42,7 @@ torch.onnx.export(
     "dinov2.onnx",
     input_names=["input"],
     output_names=["features"],
-    opset_version=17,
+    opset_version=18,
     do_constant_folding=True,
     dynamic_axes={"input": {0: "batch"}, "features": {0: "batch"}},
 )
