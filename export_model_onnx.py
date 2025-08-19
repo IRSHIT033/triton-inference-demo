@@ -18,7 +18,7 @@ dummy = torch.randn(1, 3, 224, 224, dtype=torch.float32)
 
 # Only describe inputs here (no outputs!)
 dynamic_shapes = {
-    "input": {  # Changed from "pixel_values" to match Triton pipeline
+    "pixel_values": {  # Must match the actual parameter name in forward()
         0: Dim("batch",  min=1,  max=32),
         2: Dim("height", min=224, max=1024),
         3: Dim("width",  min=224, max=1024),
