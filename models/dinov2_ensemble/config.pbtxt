@@ -24,12 +24,12 @@ ensemble_scheduling {
       model_name: "dinov2_preprocess"
       model_version: -1
       input_map { key: "IMAGE" value: "IMAGE" }
-      output_map { key: "input" value: "preproc_out" }
+      output_map { key: "pixel_values" value: "preproc_out" }
     },
     {
       model_name: "dinov2"
       model_version: -1
-      input_map  { key: "input"    value: "preproc_out" }
+      input_map  { key: "pixel_values"    value: "preproc_out" }
       output_map { key: "features" value: "features" }
     }
   ]

@@ -12,7 +12,7 @@ input [
 
 output [
   {
-    name: "input"          # must match dinov2 input name
+    name: "pixel_values"   # must match dinov2 input name
     data_type: TYPE_FP16   # changed to FP16 to match model.py output
     dims: [ 3, 224, 224 ]
   }

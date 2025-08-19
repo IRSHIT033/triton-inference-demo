@@ -4,7 +4,7 @@ max_batch_size: 32
 
 input [
   {
-    name: "input"          # must match preproc output tensor name
+    name: "pixel_values"   # must match preproc output tensor name
     data_type: TYPE_FP16   # changed to FP16 to match preproc output
     dims: [ 3, 224, 224 ]
   }

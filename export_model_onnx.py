@@ -29,10 +29,10 @@ torch.onnx.export(
     wrapped,
     (dummy,),
     "dinov2_base_cls.onnx",
-    input_names=["input"],      # Changed from "pixel_values"
-    output_names=["features"],  # Changed from "image_embeds"
-    opset_version=18,          # 18+ recommended for shape ops
+    input_names=["pixel_values"],   # Must match dynamic_shapes key and forward() parameter
+    output_names=["features"],      # Changed from "image_embeds"
+    opset_version=18,              # 18+ recommended for shape ops
     do_constant_folding=True,
-    dynamo=True,               # using the new exporter
+    dynamo=True,                   # using the new exporter
     dynamic_shapes=dynamic_shapes
 )
